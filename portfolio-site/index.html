@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dani, Product Builder</title>
+<meta name="description" content="Dani is a product builder: product owner mindset, builder hands. Projects, case studies and a career laid out like a recording session.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a DAW session. Transport bar on top, project chooser as the cover, each project opens as an arrangement (tracks × phases) with an inspector. Single dark look on purpose. */
+:root{
+  --ground:#141517; --panel:#1E1F23; --panel-2:#222327; --panel-3:#26272B; --lane-a:#1E1F23; --lane-b:#1B1C1F;
+  --line:#0B0C0D; --hair:#34353A; --ink:#F4F4F5; --ink-2:#DCDDE0; --ink-3:#B4B5BA; --ink-4:#8E9096; --lcd:#0E0F10; --on-color:#141414;
+  --amber:#E9A23B; --coral:#E5735F; --teal:#3FB8A3; --slate:#7E9CCB; --violet:#9D8BF2; --sky:#5FA8E8; --rose:#E07FB0; --rec:#E5534B;
+  --display:'Barlow Condensed','Arial Narrow',Arial,sans-serif;
+  --body:'IBM Plex Sans','Helvetica Neue',Arial,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{background:var(--ground);color:var(--ink)}
+body{font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--amber)}a:hover{color:var(--ink)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.mono{font-family:var(--mono)}
+
+/* transport */
+.transport{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--panel-3);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 16px}
+.brand{font-family:var(--display);font-weight:800;font-size:22px;text-transform:uppercase;letter-spacing:.02em;text-decoration:none;color:var(--ink);white-space:nowrap}
+.brand span{color:var(--amber)}
+.tbtns{display:flex;gap:6px}
+.tbtn{width:44px;height:36px;border:none;border-radius:4px;background:var(--hair);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.tbtn svg{width:14px;height:14px;fill:var(--ink-2)}
+.tbtn.on{background:var(--amber)} .tbtn.on svg{fill:var(--on-color)}
+.lcd{background:var(--lcd);border-radius:4px;padding:8px 14px;font-family:var(--mono);font-size:13px;color:var(--amber);font-variant-numeric:tabular-nums;flex:1 1 280px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.songs{display:flex;gap:4px}
+.song{font-family:var(--mono);font-size:12px;padding:8px 10px;border-radius:4px;border:none;cursor:pointer;background:var(--panel);color:var(--ink-3);min-height:36px}
+.song[aria-pressed="true"]{background:var(--amber);color:var(--on-color)}
+.navlinks{display:flex;gap:16px;font-family:var(--mono);font-size:13px;margin-left:auto}
+.navlinks a{color:var(--ink-3);text-decoration:none}.navlinks a:hover{color:var(--ink)}
+
+main{padding-inline:16px;padding-block:24px 40px;max-width:1440px;margin:0 auto}
+
+/* cover */
+.window{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:grid;grid-template-columns:240px minmax(0,1fr)}
+.winbar{grid-column:1/-1;height:40px;background:var(--panel-3);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-family:var(--mono);font-size:12px;color:var(--ink-4)}
+.cats{background:var(--panel-2);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:4px}
+.cat{text-align:left;border:none;border-radius:6px;padding:10px 12px;cursor:pointer;background:transparent;color:var(--ink-2);font-weight:500;display:flex;justify-content:space-between;min-height:44px;align-items:center}
+.cat .n{font-family:var(--mono);font-size:12px;opacity:.7}
+.cat[aria-pressed="true"]{background:var(--amber);color:var(--on-color)}
+.chooser{padding:28px 32px 32px;display:flex;flex-direction:column;gap:28px;min-width:0}
+.hero{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap}
+.hero h1{margin:0;font-weight:600;font-size:clamp(28px,4vw,44px);line-height:1.1;max-width:18ch;text-wrap:balance}
+.hero p{margin:10px 0 0;color:var(--ink-3);max-width:52ch}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-4)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.card{text-decoration:none;color:var(--ink);background:var(--panel-3);border:1px solid var(--hair);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;transition:transform .15s ease,border-color .15s ease}
+a.card:hover{transform:translateY(-2px);border-color:var(--c)}
+.card .art{height:108px;background:var(--c);position:relative;padding:12px 14px;display:flex;align-items:flex-end;gap:4px}
+.card .art i{display:block;height:14px;background:var(--on-color);opacity:.5;border-radius:2px}
+.card .art .k{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:11px;font-weight:500;color:var(--on-color)}
+.card .tx{padding:14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.card h3{margin:0;font-size:19px;font-weight:600}
+.card p{margin:0;font-size:14px;color:var(--ink-3);line-height:1.45}
+.card .res{font-family:var(--mono);font-size:12px;color:var(--c);margin-top:auto;padding-top:6px}
+.card.static{cursor:default}
+
+/* session */
+.session{display:grid;grid-template-columns:300px minmax(0,1fr);background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.side{background:var(--panel-2);border-right:1px solid var(--line);padding:22px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.back{font-family:var(--mono);font-size:13px;color:var(--ink-3);text-decoration:none}
+.side h2{margin:0;font-family:var(--display);font-weight:800;font-size:54px;line-height:.9;text-transform:uppercase}
+.side .sum{margin:0;color:var(--ink-2)}
+.side .meta{font-family:var(--mono);font-size:12px;color:var(--ink-3);line-height:1.6}
+.inspector{background:#2B2C31;border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:10px;border-top:4px solid var(--c);scroll-margin-top:80px}
+.inspector h3{margin:0;font-size:20px;font-weight:600}
+.inspector p{margin:0;font-size:14px;line-height:1.6;color:var(--ink-2)}
+.inspector .res{font-family:var(--mono);font-size:12px;line-height:1.5;color:var(--on-color);background:var(--c);padding:6px 8px;border-radius:3px;align-self:flex-start}
+.inspector a{font-family:var(--mono);font-size:13px}
+.hint{font-family:var(--mono);font-size:12px;color:var(--ink-4)}
+.demo{display:block;width:100%;max-height:460px;object-fit:contain;border-radius:8px;background:#000;border:1px solid var(--hair)}
+.tagdemo{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.06em;background:var(--on-color);color:var(--c);padding:1px 5px;border-radius:3px;align-self:flex-start}
+.region.ghost .tagdemo{display:none}
+.arrange{min-width:0;display:flex;flex-direction:column}
+.ruler{display:grid;grid-template-columns:170px minmax(0,1fr);height:32px;background:var(--panel-2);border-bottom:1px solid var(--line)}
+.ruler .gutter{border-right:1px solid var(--line)}
+.ticks{position:relative}
+.tick{position:absolute;top:8px;font-family:var(--mono);font-size:11px;color:var(--ink-4);padding-left:5px;border-left:1px solid #45464C;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.lanes{position:relative}
+.lane{display:grid;grid-template-columns:170px minmax(0,1fr);border-bottom:1px solid var(--line);min-height:var(--h,104px)}
+.lane:nth-child(odd) .track{background:var(--lane-a)} .lane:nth-child(even) .track{background:var(--lane-b)}
+.head{background:var(--panel-3);border-right:1px solid var(--line);padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;gap:8px}
+.head .nm{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
+.head .nm i{width:10px;height:10px;border-radius:2px;background:var(--c);display:block}
+.head .sub{font-family:var(--mono);font-size:11px;color:var(--ink-4)}
+.track{position:relative;min-width:0}
+.region{position:absolute;top:10px;bottom:10px;border:none;border-radius:4px;background:var(--c);color:var(--on-color);padding:8px 10px;text-align:left;font-size:13px;font-weight:600;line-height:1.3;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;gap:6px}
+.region .pat{height:16px;width:100%;opacity:.5;background:repeating-linear-gradient(90deg,var(--on-color) 0 10px,transparent 10px 16px)}
+.region.audio .pat{background:repeating-linear-gradient(90deg,var(--on-color) 0 2px,transparent 2px 5px)}
+.region.ghost{background:transparent;color:var(--ink-2);border:2px dashed var(--c)}
+.region.ghost .pat{display:none}
+.region[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:2px}
+.region .ph{display:none}
+.wave{height:28px;display:flex;align-items:center;gap:2px;width:100%}
+.wave span{flex:1 1 0;border-radius:1px;background:rgba(20,20,20,.4)}
+.wave span.done{background:var(--on-color)}
+.now{position:absolute;top:-32px;bottom:0;width:0;border-left:2px dashed var(--ink-4);pointer-events:none}
+.playhead{position:absolute;top:-32px;bottom:0;width:2px;background:var(--ink);pointer-events:none;transition:left .25s linear}
+.flag{position:absolute;top:-30px;background:var(--ink);color:var(--ground);font-family:var(--mono);font-size:10px;font-weight:500;padding:2px 6px;border-radius:2px;pointer-events:none;margin-left:3px}
+.trackarea{position:absolute;top:0;bottom:0;left:170px;right:0;pointer-events:none}
+
+footer{margin-top:28px;display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+footer a{color:var(--ink-3)}
+
+@media (max-width:860px){
+  .window{grid-template-columns:1fr}
+  .cats{flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid var(--line);padding:12px}
+  .cat{flex:0 0 auto;gap:10px}
+  .chooser{padding:20px 16px}
+  .session{grid-template-columns:1fr}
+  .side{border-right:none;border-bottom:1px solid var(--line)}
+  .ruler,.now,.playhead,.flag,.trackarea{display:none}
+  .lane{grid-template-columns:1fr;min-height:0}
+  .head{border-right:none;border-bottom:1px solid var(--line);flex-direction:row;align-items:center}
+  .track{display:flex;flex-direction:column;gap:8px;padding:10px}
+  .region{position:static;width:auto!important;min-height:64px}
+  .region .ph{display:block;font-family:var(--mono);font-size:11px;font-weight:500;opacity:.75}
+  .navlinks{margin-left:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+
+</head>
+<body>
+<header class="transport">
+  <a class="brand" href="#home">Dani <span>· Product builder</span></a>
+  <div class="tbtns">
+    <button class="tbtn" id="restart" type="button" aria-label="Back to the start of the song"><svg viewBox="0 0 24 24"><path d="M11 6v12l-8-6zM21 6v12l-8-6z"/></svg></button>
+    <button class="tbtn" id="play" type="button" aria-label="Play one of my songs"><svg viewBox="0 0 24 24" id="playIcon"><path d="M7 4v16l13-8z"/></svg></button>
+  </div>
+  <div class="lcd" id="lcd" aria-live="polite">1 SaaS in production · ~2,250 customers · 5,700+ orders</div>
+  <div class="songs" role="group" aria-label="Choose a song">
+    <button class="song" type="button" data-song="0" aria-pressed="true">Letra feliz</button>
+    <button class="song" type="button" data-song="1" aria-pressed="false">Aos amigos</button>
+  </div>
+  <nav class="navlinks"><a href="#home">Projects</a><a href="#career">Career</a><a href="#contact">Contact</a></nav>
+  <audio id="audio" preload="none"></audio>
+</header>
+
+<main id="app"></main>
+
+<script>
+const PEAKS = {"letra-feliz":[0.02,0.01,0.31,0.39,0.26,0.32,0.32,0.82,1.0,0.87,0.74,0.84,0.82,0.9,0.64,0.71,0.58,0.67,0.95,0.95,0.93,0.78,0.85,0.88,0.71,0.87,0.9,0.93,0.89,0.78,0.87,0.91,0.88,0.96,0.58,0.85,0.87,0.88,0.92,0.9,0.91,0.76,0.93,0.93,0.9,0.77,0.93,0.91,0.93,0.9,0.9,0.87,0.81,0.9,0.92,0.93,0.88,0.83,0.82,0.83,0.91,0.85,0.93,0.79,0.8,0.87,0.94,0.8,0.78,0.83,0.72,0.87,0.83,0.91,0.73,0.79,0.81,0.86,0.77,0.96,0.6,0.92,0.82,0.92,0.91,0.84,0.87,0.81,0.89,0.9,0.96,0.9,0.94,0.89,0.93,0.85,0.92,0.8,0.71,0.96,0.97,0.78,0.88,0.66,0.7,0.82,0.91,0.84,0.79,0.76,0.93,0.92,0.91,0.95,0.92,0.88,0.86,0.86,0.9,0.83,0.93,0.96,0.9,0.87,0.76,0.95,0.9,0.72,0.9,0.8,0.91,0.91,0.83,0.85,0.91,0.91,0.82,0.97,0.83,0.9,0.71,0.94,0.81,0.69,0.83,0.74,0.87,0.85,0.88,0.89,0.8,0.82,0.89,0.63,0.4,0.35,0.17,0.0,0.0,0.0],"aos-amigos":[0.0,0.01,0.32,0.33,0.29,0.29,0.39,0.33,0.31,0.33,0.96,0.95,0.94,0.95,0.93,0.94,0.98,0.96,0.96,0.94,0.96,0.95,0.96,0.94,0.96,0.94,0.93,0.96,0.98,0.97,0.95,0.97,0.93,0.98,0.95,0.98,0.94,0.94,0.98,0.96,0.96,0.98,0.97,0.95,0.97,0.96,0.97,0.97,0.97,0.96,0.94,0.95,0.96,0.96,0.92,0.94,0.95,0.93,0.96,0.93,0.97,0.94,0.98,0.96,0.98,0.95,1.0,0.94,0.95,0.95,0.96,0.97,0.95,0.98,0.99,0.99,0.97,0.99,0.99,0.98,0.97,0.94,0.95,0.96,0.99,1.0,0.99,0.96,0.93,0.95,0.95,0.98,0.96,0.96,0.96,0.97,0.93,0.93,0.97,0.97,0.95,0.96,0.99,0.94,0.96,0.95,0.96,0.92,0.98,0.96,0.91,0.95,0.93,0.97,0.95,0.96,0.94,0.97,0.92,0.94,0.97,0.91,0.96,0.98,0.95,0.94,0.97,0.94,0.95,0.97,0.94,0.94,0.94,0.95,0.97,0.97,0.92,0.93,0.94,0.97,0.95,0.92,0.97,0.96,0.94,0.95,0.96,0.97,0.94,0.93,0.95,0.97,0.96,0.95,0.84,0.61,0.1,0.05,0.0,0.0]};
+const SONGS = [
+  { title: 'Letra feliz', src: 'audio/letra-feliz.mp3', peaks: PEAKS['letra-feliz'] },
+  { title: 'Aos amigos', src: 'audio/aos-amigos.mp3', peaks: PEAKS['aos-amigos'] }
+];
+const C = { amber:'var(--amber)', coral:'var(--coral)', teal:'var(--teal)', slate:'var(--slate)', violet:'var(--violet)', sky:'var(--sky)', rose:'var(--rose)', ink:'var(--ink-2)' };
+
+const CARDS = [
+  { cat:'product', kind:'PRODUCT · SESSION', title:'Braavos', href:'#braavos', c:C.coral,
+    line:'A CRM for field sales reps: visit routes, follow-ups and WhatsApp sales signals.', res:'In production · ~2,250 customers · 5,700+ orders', bars:[[40,0],[70,18],[30,36],[90,18],[50,0]] },
+  { cat:'ai', kind:'AI · SESSION', title:'Voice Agents', href:'#voice', c:C.teal,
+    line:'AI takes the first call, human SDRs take the close. From briefing to live agent.', res:'~68% lower cost per published benchmark', bars:[[60,36],[40,18],[80,0],[30,18]] },
+  { cat:'ai', kind:'AI · LIVE DEMO', title:'Band Assistant', href:'https://band-assistant.streamlit.app/', ext:true, c:C.teal,
+    line:'A RAG that builds setlists and solves stage problems. Routing, hybrid search, documented bugs.', res:'Live demo · public repo', bars:[[30,0],[50,36],[70,18],[40,0]] },
+  { cat:'bsides', kind:'B-SIDE', title:'NFS-e Tracker', c:C.violet,
+    line:'Invoice and tax tracker for my own small business. A real annoyance, a small tool, shipped.', res:'Live · personal tool', bars:[[50,18],[60,0]] },
+  { cat:'bsides', kind:'B-SIDE', title:'PTT Training Log', href:'#ptt', c:C.violet,
+    line:'Personal training tracker with AI meal logging. A real need, a small tool, shipped.', res:'Live · watch the demo', bars:[[40,0],[70,18]] },
+  { cat:'career', kind:'CAREER · SESSION', title:'Career session', href:'#career', c:C.amber,
+    line:'Support to operations to product, with music running underneath. Press play.', res:'2019 → now', bars:[[140,0],[60,18],[90,36]] }
+];
+const CATS = [['all','All projects'],['product','Products'],['ai','AI'],['bsides','B-sides'],['career','Career']];
+
+const PH5 = (names) => names.map((n,i) => ({ label:n, at:i*20 }));
+const SESSIONS = {
+  braavos: {
+    title:'Braavos', back:true, lcd:'braavos.session · in production · ~2,250 customers · 5,700+ orders',
+    sum:'A CRM built for outside sales teams at fuel distributors.',
+    meta:'Role: founder & product engineer, solo<br>Stack: n8n · Supabase/Postgres (RLS) · Evolution API · Gemini · Cloudflare Pages · vanilla JS',
+    ticks: PH5(['Discover','Build','Launch','Iterate','Next']), unit:20, now:80, first:'road',
+    lanes: [
+      { name:'Problem', sub:'The pain', c:C.coral, regions:[
+        { id:'road', t:'Field reps live on the road', x:0, w:1, b:'Outside sales teams spend the day driving and talking to customers, so organization comes last: a messy WhatsApp, follow-ups kept in their heads, no detailed visit records, orders all over the place.' },
+        { id:'leak', t:'Customers slip through', x:1, w:1, b:'Whatever the field team misses lands on the inside team, which ends up spending its time winning back customers the reps let slip.' },
+        { id:'thesis', t:'Thesis: a CRM built for the road', x:2, w:2, b:'A rep needs three things: a route ordered by priority and proximity, reminders for follow-ups, and a way to spot which WhatsApp messages are real sales. Everything else is the system’s job.', r:'The product decision behind every track below' } ] },
+      { name:'Field app', sub:'For the rep', c:C.teal, regions:[
+        { id:'route', v:'media/braavos-roteiro.mp4', t:'Routes by priority + proximity', x:1, w:1, b:'The day starts with a route: customers ranked by priority, then ordered by distance from where the rep is right now. Plan the day in Campinas and the app picks the best next addresses from there, and so on.' },
+        { id:'followup', t:'Follow-up reminders', x:2, w:1, b:'Follow-ups stop living in the rep’s head: the app tells them who to get back to, and when.' },
+        { id:'leadsplit', v:'media/braavos-vendedor-novo-pedido.mp4', t:'Leads vs customers', x:3, w:1, b:'Prospects and customers who already buy are kept apart, so the rep knows who to win and who to keep.' } ] },
+      { name:'AI on WhatsApp', sub:'n8n flow', c:C.teal, regions:[
+        { id:'read', t:'Reads audio, images and text', x:0.6, w:0.8, b:'Customers write, send voice notes and photos. The flow understands all three, so nothing is lost because it wasn’t typed.' },
+        { id:'classify', t:'Classifies + routes', x:1.45, w:0.8, b:'Each conversation is classified and matched to the right rep and the right company, even with many distributors on the same platform.' },
+        { id:'handoff', t:'Human takeover pauses the bot', x:2.3, w:0.8, b:'The moment a person takes over the chat, the bot stops intervening. It starts again only when the human hands back.', r:'AI first, human closer' },
+        { id:'intent', t:'Order-intent alerts', x:3.15, w:0.85, b:'When a customer shows intent to order, the flow alerts the rep, so a sale never sits unanswered in a busy WhatsApp.' } ] },
+      { name:'Manager view', sub:'For the manager', c:C.sky, regions:[
+        { id:'cockpit', v:'media/braavos-gerente-cockpit.mp4', t:'Real-time team cockpit', x:1, w:1, b:'A live view of the whole field team: every visit shows up for the manager as it happens.' },
+        { id:'goals', v:'media/braavos-gerente-cockpit.mp4', t:'Goals + revenue tracking', x:2, w:1, b:'The manager sets goals and follows revenue against them, rep by rep.' },
+        { id:'reports', t:'Automated monthly reports', x:3, w:1, b:'Monthly sales reports generated on a schedule with pg_cron and n8n. Nobody has to remember to build them.' },
+        { id:'pdf', t:'PDF performance reports', x:4, w:1, ghost:true, b:'Next: monthly performance reports as polished PDFs, ready to forward to the business owner.' } ] },
+      { name:'Orders & pricing', sub:'Control', c:C.rose, regions:[
+        { id:'prices', v:'media/braavos-pedidos-e-precos.mp4', t:'Daily price tables', x:1.4, w:1, b:'Fuel prices change every day. The manager sends the updated price table to the team from inside the app, so reps quote today’s price.' },
+        { id:'orders', v:'media/braavos-pedidos-e-precos.mp4', t:'Smart orders + manager approval', x:2.4, w:1.6, b:'A rep orders 10,000 L of gasoline in the morning, then 12,000 L more at the end of the day. The system notices and asks: replace the earlier order, or open a new one? Edits to an existing order go to the manager for approval, so every change is visible and signed off.', r:'Every order change gets a manager’s sign-off' } ] },
+      { name:'Onboarding', sub:'Time to value', c:C.amber, regions:[
+        { id:'brand', v:'media/braavos-login.mp4', t:'Their brand in the app', x:1, w:1, b:'Each distributor sees its own visual identity: logo and colors on the app’s opening screen, for every rep and manager.' },
+        { id:'instance', t:'WhatsApp connected + guided link', x:2, w:1, b:'The company’s WhatsApp instance is set up through Evolution API, and the client gets a link with the product tutorial. Manager and reps are registered in the same step.' },
+        { id:'import', t:'Starts with history, not empty', x:3, w:1, b:'The client sends their customer base and order history; I import it with an internal tool before handing over access. The manager logs in to a system that already knows their customers.', r:'~2,250 customers · 5,700+ orders on day one' },
+        { id:'guides', t:'Onboarding guides', x:4, w:1, ghost:true, b:'Next: a written playbook for me (company setup → WhatsApp → team) and a client-facing guide, so onboarding doesn’t depend on me being in the room.' } ] },
+      { name:'Data & infra', sub:'Foundation', c:C.slate, regions:[
+        { id:'tenancy', t:'Multi-tenant data model', x:0.6, w:1.4, b:'One product, many distributors. Supabase/PostgreSQL with row-level security, so each company only ever sees its own data.' },
+        { id:'offline', t:'Offline mode + live location', x:3, w:1, b:'Reps work where the signal drops. The app keeps working offline and uses the current location to plan what comes next.' },
+        { id:'leads', t:'Auto-create leads on import', x:4, w:1, ghost:true, b:'Next: imported customers become closed-won leads automatically, so visits, follow-ups and history connect from day one.' } ] },
+      { name:'Trust', sub:'Compliance', c:C.violet, regions:[
+        { id:'lgpd', t:'LGPD compliance', x:1.6, w:1.3, b:'Brazil’s data protection law built into the product, not bolted on.' },
+        { id:'audit', t:'Export audit log', x:3, w:1, b:'Every data export is logged, so the distributor knows who took what, and when.' } ] },
+      { name:'Go-to-market', sub:'Getting it used', c:C.amber, regions:[
+        { id:'gtm', t:'Landing, pitch deck, pricing', x:2, w:1, b:'The commercial kit: landing page, pitch deck, pricing guide and one-pager, written by the same person who built the product.' },
+        { id:'client', t:'First paying client', x:3, w:1, b:'A distributor running its field sales on Braavos.', r:'In production' } ] }
+    ]
+  },
+  voice: {
+    title:'Voice Agents', back:true, lcd:'voice-agents.session · AI takes the first call · humans close',
+    sum:'Conversational AI agents that take the first call, so human SDRs spend their time on the customers ready to close.',
+    meta:'Role: prompt engineer & agent design, on two voice AI platforms<br>Craft: briefing · prompts · conversation flows · integrations · structured data',
+    ticks: PH5(['Brief','Design','Build','Launch','Scale']), unit:20, now:null, first:'overload',
+    lanes: [
+      { name:'Problem', sub:'The pain', c:C.coral, regions:[
+        { id:'overload', t:'Too many calls, too few people', x:0, w:1, b:'Lots of people to call and very few people who can dedicate themselves only to that. The result is overload and operational burnout.' },
+        { id:'telemarketing', t:'Telemarketing is costly and rigid', x:1, w:1, b:'A telemarketing operation is expensive, ties up a lot of people, and is only available for some kinds of demand.' },
+        { id:'vthesis', t:'Thesis: AI opens, humans close', x:2, w:2, b:'The AI takes the first contact: confirming data, qualifying leads, triage. Human SDRs get their time back for the customers who actually want to close, and for the sensitive conversations.', r:'The decision behind every agent I design' } ] },
+      { name:'Briefing', sub:'Understand the operation', c:C.slate, regions:[
+        { id:'deepdive', t:'Operation deep-dive', x:0, w:1, b:'Before any prompt: the goal, how the work is done today, which tools the team uses, which integrations the agent will need and how, and what is specific about the product.' },
+        { id:'intake', t:'Client intake form', x:1, w:1, b:'The client fills in a structured form with all of it. For lead capture, that includes the hook and the call to action.' } ] },
+      { name:'Agent design', sub:'What the agent says', c:C.teal, regions:[
+        { id:'context', t:'Prompt + agent context', x:1, w:1, b:'Who the agent is, what it knows, what it must never do, and when it hands over to a human.' },
+        { id:'flow', t:'Conversation flow + script', x:2, w:1, b:'The call mapped as a flow: each step, each branch, each condition, written out as a script the agent follows without drifting.' },
+        { id:'voicecraft', t:'Natural voice', x:3, w:1, b:'Accents, background sound and a fluid script, so the call feels like a conversation rather than a robot reading.' },
+        { id:'skill', t:'My process, packaged as a skill', x:4, w:1, b:'I turned my way of building agents into reusable AI skills, one for each platform’s format. The skill produces the standard structure, script and flow; I only adjust what is specific to each company and operation.', r:'Same quality on every agent · my time goes to the specifics' } ] },
+      { name:'Automation + data', sub:'What the agent does', c:C.violet, regions:[
+        { id:'integrations', t:'Integrations mapped', x:2, w:1, b:'Which systems the agent reads from and writes to, and what triggers each automation.' },
+        { id:'data', t:'Data to capture', x:3, w:1, b:'Every call ends with structured data defined in advance: what was confirmed, how the lead qualified, and what happens next.' } ] },
+      { name:'Outcome', sub:'Why it works', c:C.amber, regions:[
+        { id:'consistency', t:'Consistent triage', x:3, w:1, b:'The agent does the job the same way every time: it doesn’t change its mind, doesn’t get rattled by rude callers, has no bad days. It just completes the task.' },
+        { id:'humans', t:'Humans on the sensitive part', x:4, w:1, b:'Human attendants keep the conversations that need judgment and empathy, instead of spending their day on repetitive first contacts.' } ] },
+      { name:'Benchmark', sub:'Published platform data', c:C.rose, regions:[
+        { id:'cost', t:'~68% lower cost', x:3, w:1, b:'Published benchmark from a voice AI platform I worked with: about 68% lower monthly cost than a traditional team for the same volume of conversations.', r:'Cost per conversation: R$7.24 → R$2.31' },
+        { id:'volume', t:'3× conversations, same budget', x:4, w:1, b:'Same published benchmark: about three times more conversations for an equivalent budget, available 24/7.', r:'Platform benchmark, not a single client result' } ] }
+    ]
+  },
+  career: {
+    title:'Career', back:true, lcd:null,
+    sum:'Support to operations to product. The music track runs underneath everything: press play and the playhead walks the timeline.',
+    meta:'Product owner mindset, builder hands<br>Português · English · Español',
+    ticks:[['2019',0],['2020',70],['2021',140],['2022',210],['2023',280],['2024',350],['2025',420],['2026',520]].map(([l,p]) => ({ label:l, at:p/7.9 })),
+    unit:100/790, now:700/7.9, first:'braavosc', career:true,
+    lanes: [
+      { name:'Product', sub:'Track 01', c:C.coral, h:96, regions:[
+        { id:'braavosc', v:'media/braavos-gerente-cockpit.mp4', t:'Braavos', x:440, w:260, b:'A CRM for the outside sales teams of fuel distributors. Visit routes by priority and proximity, follow-up reminders, WhatsApp sales signals, offline mode. Designed and built solo with AI-assisted development.', r:'In production · paying client · ~2,250 customers · 5,700+ orders', link:'#braavos', lt:'Open the session →' } ] },
+      { name:'AI', sub:'Track 02', c:C.teal, h:96, regions:[
+        { id:'voicec', t:'Voice agents', x:540, w:80, b:'Designing conversational voice agents end to end, and building the commercial side from scratch.', link:'#voice', lt:'Open the session →' },
+        { id:'band', t:'Band Asst.', x:625, w:75, b:'A RAG that builds setlists and solves stage problems. Debugged layer by layer: chunking, hybrid search, then query routing.', r:'Live demo · public repo', link:'https://band-assistant.streamlit.app/', lt:'Play the live demo →' } ] },
+      { name:'B-sides', sub:'Track 03', c:C.violet, h:84, regions:[
+        { id:'nfse', t:'NFS-e', x:590, w:50, b:'Invoice and tax tracker for my own small business. Built because I needed it.' },
+        { id:'ptt', v:'media/ptt-nutricao-e-treino.mp4', t:'PTT', x:645, w:55, b:'Personal training tracker. Meals are typed in plain words and analyzed by AI; workouts run with a rest timer and progression cues. Same story: a real need, a small tool, shipped.' } ] },
+      { name:'Day jobs', sub:'Track 04', c:C.slate, h:84, audio:true, regions:[
+        { id:'law', t:'Law · English', x:0, w:68, b:'Court internship and teaching English. Reading dense rules, then explaining them simply.', ph:'2019–2020' },
+        { id:'school', t:'School admin', x:72, w:66, b:'Administration at a public school. First taste of fixing processes nobody owned.', ph:'2020–2021' },
+        { id:'health', t:'Health ops', x:146, w:150, b:'Operations for a regional public-health service. Digitized the scheduling system and organized patients, doctors and appointments into spreadsheets.', r:'Paper scheduling → digital', ph:'2021–2023' },
+        { id:'support', t:'Customer support', x:360, w:340, b:'Disputes and chargebacks at a global e-commerce checkout platform. This is where I learned that most product problems show up in the support queue first.', r:'Up to ~400 tickets a day', ph:'2024–now' } ] },
+      { name:'Music', sub:'Track 05 · the bass line', c:C.amber, h:80, regions:[
+        { id:'music', t:'Guitar · drums · vocals', x:0, w:790, wave:true, b:'Bands and released songs. It is where I learned how I learn: by ear first, then the theory. Press play and one of my songs runs while the playhead walks the timeline.', ph:'2019–now' } ] },
+      { name:'Track 06', sub:'Open', c:C.ink, h:80, regions:[
+        { id:'next', t:'Your team?', x:706, w:84, ghost:true, b:'Track 06 is unwritten. If you are building something and need a product builder who ships, let’s talk.', link:'#contact', lt:'Get in touch →' } ] }
+    ]
+  }
+};
+
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (m) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' })[m]);
+const app = $('#app');
+const audio = $('#audio');
+const state = { cat:'all', sel:{}, song:0, prog:0 };
+const DEFAULT_LCD = '1 SaaS in production · ~2,250 customers · 5,700+ orders';
+const fmt = (v) => { const n = Math.floor(v || 0); return Math.floor(n/60) + ':' + String(n%60).padStart(2,'0'); };
+
+function footer(){
+  return `<footer id="contact">
+    <span>Guitar · drums · vocals · more of my music: <a href="https://open.spotify.com/track/3VQI56IlPcjq0XFngjt89r" target="_blank" rel="noopener">So Bad</a> · <a href="https://open.spotify.com/track/5g4y3YAr6j24iCa0gELErv" target="_blank" rel="noopener">Vem Só</a></span>
+    <span><a href="https://www.linkedin.com/in/daniela-christina-andrade-e-silva-7527403ba" target="_blank" rel="noopener">LinkedIn</a> · <a href="https://github.com/dannychris2212" target="_blank" rel="noopener">GitHub</a> · <a href="mailto:danielachristina.producao@gmail.com">danielachristina.producao@gmail.com</a></span>
+  </footer>`;
+}
+
+function renderHome(){
+  const cards = state.cat === 'all' ? CARDS : CARDS.filter((c) => c.cat === state.cat);
+  app.innerHTML = `
+  <section class="window" aria-label="Projects">
+    <div class="winbar"><span>Choose a project</span><span>${cards.length} sessions</span></div>
+    <div class="cats" role="group" aria-label="Filter projects">
+      ${CATS.map(([id,label]) => `<button class="cat" type="button" data-cat="${id}" aria-pressed="${state.cat===id}"><span>${label}</span><span class="n">${id==='all'?CARDS.length:CARDS.filter((c)=>c.cat===id).length}</span></button>`).join('')}
+    </div>
+    <div class="chooser">
+      <div class="hero">
+        <div>
+          <span class="kicker">Product builder · product owner mindset</span>
+          <h1>I turn messy operations into products people use.</h1>
+          <p>Self-taught builder who came up through support and operations. I find the problem, design the product and ship it. Open a project to see how it was built.</p>
+        </div>
+      </div>
+      <div class="cards">
+        ${cards.map((p) => {
+          const art = `<div class="art"><span class="k">${p.kind}</span>${p.bars.map(([w,y]) => `<i style="width:${w}px;margin-bottom:${y}px"></i>`).join('')}</div>`;
+          const tx = `<div class="tx"><h3>${esc(p.title)}</h3><p>${esc(p.line)}</p><span class="res">${esc(p.res)}</span></div>`;
+          return p.href
+            ? `<a class="card" style="--c:${p.c}" href="${p.href}"${p.ext?' target="_blank" rel="noopener"':''}>${art}${tx}</a>`
+            : `<div class="card static" style="--c:${p.c}">${art}${tx}</div>`;
+        }).join('')}
+      </div>
+    </div>
+  </section>${footer()}`;
+  app.querySelectorAll('.cat').forEach((b) => b.addEventListener('click', () => { state.cat = b.dataset.cat; renderHome(); }));
+}
+
+function renderSession(key){
+  const s = SESSIONS[key];
+  const sel = state.sel[key] || s.first;
+  let cur = null, curC = null, curL = '';
+  s.lanes.forEach((l) => l.regions.forEach((r) => { if (r.id === sel) { cur = r; curC = l.c; curL = l.name; } }));
+  const pos = (r) => s.career ? `left:${r.x*s.unit}%;width:calc(${r.w*s.unit}% - 4px)` : `left:calc(${r.x*s.unit}% + 4px);width:calc(${r.w*s.unit}% - 8px)`;
+  const phase = (r) => r.ph || (s.career ? '' : s.ticks[Math.min(4, Math.floor(r.x))].label);
+  app.innerHTML = `
+  <section class="session" aria-label="${esc(s.title)} session">
+    <aside class="side">
+      <a class="back" href="#home">← All projects</a>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <h2>${esc(s.title)}</h2>
+        <p class="sum">${esc(s.sum)}</p>
+        <span class="meta">${s.meta}</span>
+      </div>
+      <div class="inspector" id="inspector" style="--c:${curC}">
+        <span class="kicker">${esc(curL + (phase(cur) ? ' · ' + phase(cur) : ''))}</span>
+        <h3>${esc(cur.t)}</h3>
+        <p>${esc(cur.b)}</p>
+        ${cur.r ? `<span class="res">${esc(cur.r)}</span>` : ''}
+        ${cur.v ? `<video class="demo" src="${cur.v}" autoplay muted loop playsinline preload="metadata" aria-label="Screen recording: ${esc(cur.t)}"></video>` : ''}
+        ${cur.link ? `<a href="${cur.link}"${cur.link.startsWith('http')?' target="_blank" rel="noopener"':''}>${esc(cur.lt)}</a>` : ''}
+      </div>
+      <span class="hint">Select a region to read its notes. DEMO regions play a screen recording; dashed ones are what comes next.</span>
+    </aside>
+    <div class="arrange">
+      <div class="ruler" aria-hidden="true"><div class="gutter"></div><div class="ticks">${s.ticks.map((t) => `<span class="tick" style="left:${t.at}%">${t.label}</span>`).join('')}</div></div>
+      <div class="lanes">
+        ${s.lanes.map((l) => `
+        <div class="lane" style="--c:${l.c};--h:${l.h||104}px">
+          <div class="head"><span class="nm"><i></i>${esc(l.name)}</span><span class="sub">${esc(l.sub)}</span></div>
+          <div class="track">
+            ${l.regions.map((r) => `<button class="region${r.ghost?' ghost':''}${l.audio?' audio':''}" type="button" data-id="${r.id}" aria-pressed="${r.id===sel}" style="${pos(r)}">
+              <span>${esc(r.t)}</span>${r.v ? '<span class="tagdemo">DEMO</span>' : ''}<span class="ph">${esc(phase(r))}</span>
+              ${r.wave ? `<span class="wave" id="wave">${SONGS[state.song].peaks.map((v) => `<span style="height:${Math.max(8, Math.round(v*100))}%"></span>`).join('')}</span>` : '<span class="pat"></span>'}
+            </button>`).join('')}
+          </div>
+        </div>`).join('')}
+        <div class="trackarea" aria-hidden="true">
+          ${s.now != null ? `<div class="now" style="left:${s.now}%"></div><span class="flag" style="left:${s.now}%">NOW</span>` : ''}
+          ${s.career ? `<div class="playhead" id="playhead" style="left:${s.now}%"></div>` : ''}
+        </div>
+      </div>
+    </div>
+  </section>${footer()}`;
+  app.querySelectorAll('.region').forEach((b) => b.addEventListener('click', () => {
+    state.sel[key] = b.dataset.id; renderSession(key);
+    if (window.matchMedia('(max-width:860px)').matches) { const ins = $('#inspector'); if (ins) ins.scrollIntoView({ behavior:'smooth', block:'start' }); }
+  }));
+  setLcd(); paintProgress();
+}
+
+function route(){
+  const h = location.hash.replace('#','');
+  if (h === 'ptt') { state.sel.career = 'ptt'; renderSession('career'); }
+  else if (SESSIONS[h]) renderSession(h);
+  else if (h === 'contact') { renderHome(); const f = $('#contact'); if (f) f.scrollIntoView(); }
+  else renderHome();
+  if (h !== 'contact') window.scrollTo(0, 0);
+}
+
+/* audio */
+const playBtn = $('#play'), playIcon = $('#playIcon');
+function setLcd(){
+  const h = location.hash.replace('#','');
+  const base = (SESSIONS[h] && SESSIONS[h].lcd) || DEFAULT_LCD;
+  $('#lcd').textContent = audio.duration && (state.prog > 0 || !audio.paused) ? `♪ ${SONGS[state.song].title} · ${fmt(audio.currentTime)} / ${fmt(audio.duration)}` : base;
+}
+function paintProgress(){
+  const wave = $('#wave');
+  if (wave) { const kids = wave.children, n = kids.length; for (let i = 0; i < n; i++) kids[i].classList.toggle('done', i / n < state.prog); }
+  const ph = $('#playhead');
+  if (ph) { const now = SESSIONS.career.now; ph.style.left = (state.prog > 0 || !audio.paused ? now * state.prog : now) + '%'; }
+}
+function setPlaying(on){
+  playBtn.classList.toggle('on', on);
+  playBtn.setAttribute('aria-label', on ? 'Pause the song' : 'Play one of my songs');
+  playIcon.innerHTML = on ? '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>' : '<path d="M7 4v16l13-8z"/>';
+}
+function loadSong(i){
+  state.song = i; state.prog = 0; audio.src = SONGS[i].src;
+  document.querySelectorAll('.song').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.song) === i)));
+  const h = location.hash.replace('#',''); if (h === 'career') renderSession('career');
+}
+playBtn.addEventListener('click', () => {
+  if (!audio.src) audio.src = SONGS[state.song].src;
+  if (audio.paused) audio.play().catch(() => setPlaying(false)); else audio.pause();
+});
+$('#restart').addEventListener('click', () => { audio.currentTime = 0; state.prog = 0; paintProgress(); setLcd(); });
+document.querySelectorAll('.song').forEach((b) => b.addEventListener('click', () => {
+  const wasPlaying = !audio.paused; loadSong(Number(b.dataset.song)); if (wasPlaying) audio.play().catch(() => setPlaying(false));
+}));
+audio.addEventListener('play', () => setPlaying(true));
+audio.addEventListener('pause', () => { setPlaying(false); setLcd(); });
+audio.addEventListener('ended', () => { state.prog = 1; paintProgress(); setLcd(); });
+audio.addEventListener('timeupdate', () => { state.prog = audio.duration ? audio.currentTime / audio.duration : 0; paintProgress(); setLcd(); });
+
+window.addEventListener('hashchange', route);
+route();
+</script>
+
+</body>
+</html>
