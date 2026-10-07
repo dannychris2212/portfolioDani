@@ -37,9 +37,16 @@ button{font:inherit;color:inherit}
 .tbtn svg{width:14px;height:14px;fill:var(--ink-2)}
 .tbtn.on{background:var(--amber)} .tbtn.on svg{fill:var(--on-color)}
 .lcd{background:var(--lcd);border-radius:4px;padding:8px 14px;font-family:var(--mono);font-size:13px;color:var(--amber);font-variant-numeric:tabular-nums;flex:1 1 280px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.songs{display:flex;gap:4px}
-.song{font-family:var(--mono);font-size:12px;padding:8px 10px;border-radius:4px;border:none;cursor:pointer;background:var(--panel);color:var(--ink-3);min-height:36px}
-.song[aria-pressed="true"]{background:var(--amber);color:var(--on-color)}
+.lcd.live{display:flex;align-items:center;gap:14px;color:var(--ink-3)}
+.lcd .seg{display:inline-flex;align-items:baseline;gap:6px;white-space:nowrap}
+.lcd .lbl{font-size:10px;letter-spacing:.08em;color:var(--ink-4)}
+.lcd .val{color:var(--amber)}
+.lcd .title{color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis}
+.lcd .pos{font-size:15px;color:var(--amber);letter-spacing:.04em}
+.lcd .sep{width:1px;height:14px;background:var(--hair);flex:0 0 auto}
+.metro{display:inline-flex;gap:3px;align-items:center}
+.metro i{width:7px;height:7px;border-radius:50%;background:var(--hair);display:block}
+.metro i.on{background:var(--amber)} .metro i.on.one{background:var(--coral)}
 .navlinks{display:flex;gap:16px;font-family:var(--mono);font-size:13px;margin-left:auto}
 .navlinks a{color:var(--ink-3);text-decoration:none}.navlinks a:hover{color:var(--ink)}
 
@@ -130,6 +137,8 @@ footer a{color:var(--ink-3)}
   .region{position:static;width:auto!important;min-height:64px}
   .region .ph{display:block;font-family:var(--mono);font-size:11px;font-weight:500;opacity:.75}
   .navlinks{margin-left:0}
+  .lcd{flex-basis:100%;order:5;font-size:12px}
+  .lcd.live{gap:10px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
@@ -141,12 +150,9 @@ footer a{color:var(--ink-3)}
   <div class="tbtns">
     <button class="tbtn" id="restart" type="button" aria-label="Back to the start of the song"><svg viewBox="0 0 24 24"><path d="M11 6v12l-8-6zM21 6v12l-8-6z"/></svg></button>
     <button class="tbtn" id="play" type="button" aria-label="Play one of my songs"><svg viewBox="0 0 24 24" id="playIcon"><path d="M7 4v16l13-8z"/></svg></button>
+    <button class="tbtn" id="next" type="button" aria-label="Next song"><svg viewBox="0 0 24 24"><path d="M4 6v12l8-6zM12 6v12l8-6zM20 6h2v12h-2z"/></svg></button>
   </div>
   <div class="lcd" id="lcd" aria-live="polite">1 SaaS in production · ~2,250 customers · 5,700+ orders</div>
-  <div class="songs" role="group" aria-label="Choose a song">
-    <button class="song" type="button" data-song="0" aria-pressed="true">Letra feliz</button>
-    <button class="song" type="button" data-song="1" aria-pressed="false">Aos amigos</button>
-  </div>
   <nav class="navlinks"><a href="#home">Projects</a><a href="#career">Career</a><a href="#contact">Contact</a></nav>
   <audio id="audio" preload="none"></audio>
 </header>
@@ -156,8 +162,8 @@ footer a{color:var(--ink-3)}
 <script>
 const PEAKS = {"letra-feliz":[0.02,0.01,0.31,0.39,0.26,0.32,0.32,0.82,1.0,0.87,0.74,0.84,0.82,0.9,0.64,0.71,0.58,0.67,0.95,0.95,0.93,0.78,0.85,0.88,0.71,0.87,0.9,0.93,0.89,0.78,0.87,0.91,0.88,0.96,0.58,0.85,0.87,0.88,0.92,0.9,0.91,0.76,0.93,0.93,0.9,0.77,0.93,0.91,0.93,0.9,0.9,0.87,0.81,0.9,0.92,0.93,0.88,0.83,0.82,0.83,0.91,0.85,0.93,0.79,0.8,0.87,0.94,0.8,0.78,0.83,0.72,0.87,0.83,0.91,0.73,0.79,0.81,0.86,0.77,0.96,0.6,0.92,0.82,0.92,0.91,0.84,0.87,0.81,0.89,0.9,0.96,0.9,0.94,0.89,0.93,0.85,0.92,0.8,0.71,0.96,0.97,0.78,0.88,0.66,0.7,0.82,0.91,0.84,0.79,0.76,0.93,0.92,0.91,0.95,0.92,0.88,0.86,0.86,0.9,0.83,0.93,0.96,0.9,0.87,0.76,0.95,0.9,0.72,0.9,0.8,0.91,0.91,0.83,0.85,0.91,0.91,0.82,0.97,0.83,0.9,0.71,0.94,0.81,0.69,0.83,0.74,0.87,0.85,0.88,0.89,0.8,0.82,0.89,0.63,0.4,0.35,0.17,0.0,0.0,0.0],"aos-amigos":[0.0,0.01,0.32,0.33,0.29,0.29,0.39,0.33,0.31,0.33,0.96,0.95,0.94,0.95,0.93,0.94,0.98,0.96,0.96,0.94,0.96,0.95,0.96,0.94,0.96,0.94,0.93,0.96,0.98,0.97,0.95,0.97,0.93,0.98,0.95,0.98,0.94,0.94,0.98,0.96,0.96,0.98,0.97,0.95,0.97,0.96,0.97,0.97,0.97,0.96,0.94,0.95,0.96,0.96,0.92,0.94,0.95,0.93,0.96,0.93,0.97,0.94,0.98,0.96,0.98,0.95,1.0,0.94,0.95,0.95,0.96,0.97,0.95,0.98,0.99,0.99,0.97,0.99,0.99,0.98,0.97,0.94,0.95,0.96,0.99,1.0,0.99,0.96,0.93,0.95,0.95,0.98,0.96,0.96,0.96,0.97,0.93,0.93,0.97,0.97,0.95,0.96,0.99,0.94,0.96,0.95,0.96,0.92,0.98,0.96,0.91,0.95,0.93,0.97,0.95,0.96,0.94,0.97,0.92,0.94,0.97,0.91,0.96,0.98,0.95,0.94,0.97,0.94,0.95,0.97,0.94,0.94,0.94,0.95,0.97,0.97,0.92,0.93,0.94,0.97,0.95,0.92,0.97,0.96,0.94,0.95,0.96,0.97,0.94,0.93,0.95,0.97,0.96,0.95,0.84,0.61,0.1,0.05,0.0,0.0]};
 const SONGS = [
-  { title: 'Letra feliz', src: 'audio/letra-feliz.mp3', peaks: PEAKS['letra-feliz'] },
-  { title: 'Aos amigos', src: 'audio/aos-amigos.mp3', peaks: PEAKS['aos-amigos'] }
+  { title: 'Letra feliz', src: 'audio/letra-feliz.mp3', peaks: PEAKS['letra-feliz'], bpm: 150, sig: [4, 4] },
+  { title: 'Aos amigos', src: 'audio/aos-amigos.mp3', peaks: PEAKS['aos-amigos'], bpm: 130, sig: [4, 4] }
 ];
 const C = { amber:'var(--amber)', coral:'var(--coral)', teal:'var(--teal)', slate:'var(--slate)', violet:'var(--violet)', sky:'var(--sky)', rose:'var(--rose)', ink:'var(--ink-2)' };
 
@@ -290,8 +296,8 @@ const fmt = (v) => { const n = Math.floor(v || 0); return Math.floor(n/60) + ':'
 
 function footer(){
   return `<footer id="contact">
-    <span>Guitar · drums · vocals · more of my music: <a href="https://open.spotify.com/track/3VQI56IlPcjq0XFngjt89r" target="_blank" rel="noopener">So Bad</a> · <a href="https://open.spotify.com/track/5g4y3YAr6j24iCa0gELErv" target="_blank" rel="noopener">Vem Só</a></span>
     <span><a href="https://www.linkedin.com/in/daniela-christina-andrade-e-silva-7527403ba" target="_blank" rel="noopener">LinkedIn</a> · <a href="https://github.com/dannychris2212" target="_blank" rel="noopener">GitHub</a> · <a href="mailto:danielachristina.producao@gmail.com">danielachristina.producao@gmail.com</a></span>
+    <span>Guitar · drums · vocals · more of my music: <a href="https://open.spotify.com/track/3VQI56IlPcjq0XFngjt89r" target="_blank" rel="noopener">So Bad</a> · <a href="https://open.spotify.com/track/5g4y3YAr6j24iCa0gELErv" target="_blank" rel="noopener">Vem Só</a></span>
   </footer>`;
 }
 
@@ -392,7 +398,21 @@ const playBtn = $('#play'), playIcon = $('#playIcon');
 function setLcd(){
   const h = location.hash.replace('#','');
   const base = (SESSIONS[h] && SESSIONS[h].lcd) || DEFAULT_LCD;
-  $('#lcd').textContent = audio.duration && (state.prog > 0 || !audio.paused) ? `♪ ${SONGS[state.song].title} · ${fmt(audio.currentTime)} / ${fmt(audio.duration)}` : base;
+  const lcd = $('#lcd');
+  const live = audio.duration && (state.prog > 0 || !audio.paused);
+  lcd.classList.toggle('live', !!live);
+  if (!live) { lcd.textContent = base; lcd.dataset.last = ''; return; }
+  const song = SONGS[state.song], per = song.sig[0];
+  const beats = Math.floor(audio.currentTime * song.bpm / 60);
+  const bar = Math.floor(beats / per) + 1, beat = (beats % per) + 1;
+  const dots = Array.from({ length: per }, (_, i) => `<i class="${i < beat ? 'on' : ''}${i === 0 ? ' one' : ''}"></i>`).join('');
+  const html =
+    `<span class="seg title">${audio.paused ? '❚❚' : '▶'} ${esc(song.title)}</span><span class="sep"></span>` +
+    `<span class="seg"><span class="pos">${String(bar).padStart(3, '0')}.${beat}</span><span class="metro" aria-hidden="true">${dots}</span></span><span class="sep"></span>` +
+    `<span class="seg"><span class="val">${fmt(audio.currentTime)}</span><span class="lbl">/ ${fmt(audio.duration)}</span></span><span class="sep"></span>` +
+    `<span class="seg"><span class="val">${song.sig[0]}/${song.sig[1]}</span></span><span class="sep"></span>` +
+    `<span class="seg"><span class="val">${song.bpm}</span><span class="lbl">BPM</span></span>`;
+  if (lcd.dataset.last !== html) { lcd.innerHTML = html; lcd.dataset.last = html; }
 }
 function paintProgress(){
   const wave = $('#wave');
@@ -407,7 +427,6 @@ function setPlaying(on){
 }
 function loadSong(i){
   state.song = i; state.prog = 0; audio.src = SONGS[i].src;
-  document.querySelectorAll('.song').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.song) === i)));
   const h = location.hash.replace('#',''); if (h === 'career') renderSession('career');
 }
 playBtn.addEventListener('click', () => {
@@ -415,13 +434,16 @@ playBtn.addEventListener('click', () => {
   if (audio.paused) audio.play().catch(() => setPlaying(false)); else audio.pause();
 });
 $('#restart').addEventListener('click', () => { audio.currentTime = 0; state.prog = 0; paintProgress(); setLcd(); });
-document.querySelectorAll('.song').forEach((b) => b.addEventListener('click', () => {
-  const wasPlaying = !audio.paused; loadSong(Number(b.dataset.song)); if (wasPlaying) audio.play().catch(() => setPlaying(false));
-}));
-audio.addEventListener('play', () => setPlaying(true));
+$('#next').addEventListener('click', () => {
+  loadSong((state.song + 1) % SONGS.length);
+  audio.play().catch(() => setPlaying(false));
+});
+let raf = 0;
+function tick(){ if (!audio.paused) { setLcd(); raf = requestAnimationFrame(tick); } }
+audio.addEventListener('play', () => { setPlaying(true); cancelAnimationFrame(raf); raf = requestAnimationFrame(tick); });
 audio.addEventListener('pause', () => { setPlaying(false); setLcd(); });
 audio.addEventListener('ended', () => { state.prog = 1; paintProgress(); setLcd(); });
-audio.addEventListener('timeupdate', () => { state.prog = audio.duration ? audio.currentTime / audio.duration : 0; paintProgress(); setLcd(); });
+audio.addEventListener('timeupdate', () => { state.prog = audio.duration ? audio.currentTime / audio.duration : 0; paintProgress(); });
 
 window.addEventListener('hashchange', route);
 route();
